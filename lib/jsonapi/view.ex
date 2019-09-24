@@ -117,7 +117,8 @@ defmodule JSONAPI.View do
   defmacro __using__(opts \\ []) do
     {type, opts} = Keyword.pop(opts, :type)
     {namespace, opts} = Keyword.pop(opts, :namespace)
-    {paginator, _opts} = Keyword.pop(opts, :paginator)
+    {paginator, opts} = Keyword.pop(opts, :paginator)
+    {collection, _opts} = Keyword.pop(opts, :paginator)
 
     quote do
       import JSONAPI.Serializer, only: [serialize: 5]
@@ -125,6 +126,7 @@ defmodule JSONAPI.View do
       @resource_type unquote(type)
       @namespace unquote(namespace)
       @paginator unquote(paginator)
+      @collection unquote(collection)
 
       def id(nil), do: nil
       def id(%{__struct__: Ecto.Association.NotLoaded}), do: nil
@@ -134,6 +136,12 @@ defmodule JSONAPI.View do
         def type, do: @resource_type
       else
         def type, do: raise("Need to implement type/0")
+      end
+
+      if @collection do
+        def collection, do: @collection
+      else
+        def collection, do: type()
       end
 
       if @namespace do
@@ -215,14 +223,14 @@ defmodule JSONAPI.View do
 
       def url_for(data, nil) when is_list(data), do: "#{namespace()}/#{type()}"
 
-      def url_for(data, nil), do: "#{namespace()}/#{type()}/#{id(data)}"
+      def url_for(data, nil), do: "#{namespace()}/#{collection()}/#{id(data)}"
 
       def url_for(data, %Plug.Conn{} = conn) when is_list(data) do
-        "#{scheme(conn)}://#{host(conn)}#{namespace()}/#{type()}"
+        "#{scheme(conn)}://#{host(conn)}#{namespace()}/#{collection()}"
       end
 
       def url_for(data, %Plug.Conn{} = conn) do
-        "#{scheme(conn)}://#{host(conn)}#{namespace()}/#{type()}/#{id(data)}"
+        "#{scheme(conn)}://#{host(conn)}#{namespace()}/#{collection()}/#{id(data)}"
       end
 
       def url_for_rel(data, rel_type, conn) do
