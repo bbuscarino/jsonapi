@@ -226,7 +226,6 @@ defmodule JSONAPI.View do
 
       def url_for(data, nil), do: "#{namespace()}/#{collection()}/#{id(data)}"
 
-
       def url_for(data, %Plug.Conn{} = conn) when is_list(data) do
         "#{scheme(conn)}://#{host(conn)}#{namespace()}/#{collection()}"
       end
